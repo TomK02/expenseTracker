@@ -11,6 +11,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@react-navigation/bottom-tabs": "^6.5.20",
     "@react-navigation/drawer": "^6.6.15",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/native-stack": "^6.9.26",
@@ -49,11 +50,5 @@
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "yarn@4.3.0",
-  "ignoreDeps": [
-    "dev"
-  ],
-  "ignorePackages": [
-    "nodemon"
-  ]
+  "packageManager": "yarn@4.3.0"
 }
