@@ -1,46 +1,47 @@
 import React, { createContext, useReducer } from 'react';
 
-const DUMMY_EXPENSES: Expenses[] = [
-  {
-    id: 'e1',
-    title: 'A pair of shoes',
-    amount: 59.99,
-    date: new Date('2021-12-19'),
-    description: 'A very nice pair of shoes',
-  },
-  {
-    id: 'e2',
-    title: 'A pair of trousers',
-    amount: 89.29,
-    date: new Date('2022-01-05'),
-    description: 'A very nice pair of trousers',
-  },
-  {
-    id: 'e3',
-    title: 'Some bananas',
-    amount: 5.99,
-    date: new Date('2021-12-01'),
-    description: 'A bunch of bananas',
-  },
-  {
-    id: 'e4',
-    title: 'A book',
-    amount: 14.99,
-    date: new Date('2022-02-19'),
-    description: 'A very nice book',
-  },
-  {
-    id: 'e5',
-    title: 'Another book',
-    amount: 18.59,
-    date: new Date('2022-02-18'),
-    description: 'Another very nice book',
-  },
-];
+// const DUMMY_EXPENSES: Expenses[] = [
+//   {
+//     id: 'e1',
+//     title: 'A pair of shoes',
+//     amount: 59.99,
+//     date: new Date('2021-12-19'),
+//     description: 'A very nice pair of shoes',
+//   },
+//   {
+//     id: 'e2',
+//     title: 'A pair of trousers',
+//     amount: 89.29,
+//     date: new Date('2022-01-05'),
+//     description: 'A very nice pair of trousers',
+//   },
+//   {
+//     id: 'e3',
+//     title: 'Some bananas',
+//     amount: 5.99,
+//     date: new Date('2021-12-01'),
+//     description: 'A bunch of bananas',
+//   },
+//   {
+//     id: 'e4',
+//     title: 'A book',
+//     amount: 14.99,
+//     date: new Date('2022-02-19'),
+//     description: 'A very nice book',
+//   },
+//   {
+//     id: 'e5',
+//     title: 'Another book',
+//     amount: 18.59,
+//     date: new Date('2022-02-18'),
+//     description: 'Another very nice book',
+//   },
+// ];
 
 interface ExpensesContextType {
   expenses: Expenses[];
-  addExpense: (expenseData: ExpensePayload) => void;
+  addExpense: (expenseData: Expenses) => void;
+  setExpenses: (expenses: Expenses[]) => void;
   deleteExpense: (id: string) => void;
   updateExpense: (id: ID, expenseData: ExpensePayload) => void;
 }
@@ -48,6 +49,7 @@ interface ExpensesContextType {
 export const ExpensesContext = createContext<ExpensesContextType>({
   expenses: [],
   addExpense: () => {},
+  setExpenses: () => {},
   deleteExpense: () => {},
   updateExpense: () => {},
 });
@@ -69,11 +71,12 @@ export type Expenses = {
 };
 
 interface ExpenseAction {
-  type: 'ADD' | 'DELETE' | 'UPDATE';
+  type: 'ADD' | 'SET' | 'DELETE' | 'UPDATE';
   payload:
     | { id: ID }
-    | { data: ExpensePayload }
-    | { id: ID; data: ExpensePayload };
+    | { id: ID; data: ExpensePayload }
+    | { addData: Expenses }
+    | Expenses[];
 }
 
 const expenseReducer: React.Reducer<Expenses[], ExpenseAction> = (
@@ -82,15 +85,21 @@ const expenseReducer: React.Reducer<Expenses[], ExpenseAction> = (
 ) => {
   switch (action.type) {
     case 'ADD': {
-      if (!('data' in action.payload)) {
+      if (!('addData' in action.payload)) {
         throw new Error('ADD action must have a data property in the payload.');
       }
 
-      const date = new Date();
-      const id = date.toString().concat(Math.random().toString());
-
-      return [{ ...action.payload.data, id }, ...state];
+      return [action.payload.addData, ...state];
     }
+
+    case 'SET': {
+      if (!Array.isArray(action.payload)) {
+        throw new Error('SET action must have a data property in the payload.');
+      }
+      const invertedArray = action.payload.reverse();
+      return invertedArray;
+    }
+
     case 'UPDATE': {
       if (!('data' in action.payload && 'id' in action.payload)) {
         throw new Error(
@@ -128,10 +137,14 @@ const expenseReducer: React.Reducer<Expenses[], ExpenseAction> = (
 };
 
 function ExpensesContextProvider({ children }: { children: React.ReactNode }) {
-  const [expenseState, dispatch] = useReducer(expenseReducer, DUMMY_EXPENSES);
+  const [expenseState, dispatch] = useReducer(expenseReducer, []);
 
-  const addExpense = (expenseData: ExpensePayload) => {
-    dispatch({ type: 'ADD', payload: { data: expenseData } });
+  const addExpense = (expenseData: Expenses) => {
+    dispatch({ type: 'ADD', payload: { addData: expenseData } });
+  };
+
+  const setExpenses = (expenses: Expenses[]) => {
+    dispatch({ type: 'SET', payload: expenses });
   };
 
   const deleteExpense = (id: string) => {
@@ -145,6 +158,7 @@ function ExpensesContextProvider({ children }: { children: React.ReactNode }) {
   const value = {
     expenses: expenseState,
     addExpense,
+    setExpenses,
     deleteExpense,
     updateExpense,
   };
